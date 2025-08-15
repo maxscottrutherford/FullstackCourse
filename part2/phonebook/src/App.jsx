@@ -3,6 +3,7 @@ import axios from "axios";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
+import personService from './services/persons'
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -11,11 +12,9 @@ const App = () => {
   const [searchValue, setSearchValue] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
-      })
+    personService.getAll().then((initialPersons) => {
+      setPersons(initialPersons)
+    })
   }, [])
 
   const addPerson = (event) => {
@@ -26,14 +25,42 @@ const App = () => {
     }
 
     if (persons.map(person => person.name.toUpperCase()).includes(newName.toUpperCase())) {
-      alert(`${newName} is already added to the phonebook`)
-      setNewName('')
-      setNewNumber('')
+      const person = persons.find((p) => p.name.toUpperCase() === newName.toUpperCase())
+      const changedPerson = { ...person, number: newNumber }
+
+      if (window.confirm(`${person.name} is already added to phonebook, replace number?`)) {
+        personService
+          .update(person.id, changedPerson)
+          .then((returnedPerson) => {
+            setPersons(persons.map((person) => (person.id !== changedPerson.id ? person : returnedPerson)))
+          })
+      }
+      else {
+        setNewName('')
+        setNewNumber('')
+      }
     }
     else {
-      setPersons(persons.concat(personObject))
-      setNewName('')
-      setNewNumber('')
+      personService.create(personObject).then((returnedPerson) => {
+        setPersons(persons.concat(returnedPerson))
+        setNewName('')
+        setNewNumber('')
+      })
+    }
+  }
+
+  const removePerson = (id) => {
+    const person = persons.find((p) => p.id === id)
+    if (window.confirm(`Are you sure you want to delete ${person.name}?`)) {
+      console.log(`${person.name} deleted`)
+      personService
+        .remove(id)
+        .then((returnedPerson) => {
+          setPersons(persons.filter((p) => p.id !== id))
+        })
+    }
+    else {
+      console.log(`${person.name} not deleted`)
     }
   }
 
@@ -62,7 +89,7 @@ const App = () => {
         newNumber={newNumber} handleNumberChange={handleNumberChange} 
       />
       <h3>Numbers</h3>
-      <Persons persons={filteredPersons} />
+      <Persons persons={filteredPersons} removePerson={removePerson}/>
     </div>
   )
 }
