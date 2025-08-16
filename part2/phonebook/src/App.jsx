@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import Filter from "./components/Filter";
-import PersonForm from "./components/PersonForm";
-import Persons from "./components/Persons";
+import { useState, useEffect } from "react"
+import Filter from "./components/Filter"
+import PersonForm from "./components/PersonForm"
+import Persons from "./components/Persons"
+import Notification from './components/Notification'
 import personService from './services/persons'
 
 const App = () => {
@@ -10,6 +10,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searchValue, setSearchValue] = useState('')
+  const [message, setMessage] = useState(null)
+  const [isError, setIsError] = useState(false)
 
   useEffect(() => {
     personService.getAll().then((initialPersons) => {
@@ -34,19 +36,38 @@ const App = () => {
           .then((returnedPerson) => {
             setPersons(persons.map((person) => (person.id !== changedPerson.id ? person : returnedPerson)))
           })
-      }
-      else {
-        setNewName('')
-        setNewNumber('')
+          .catch((error) => {
+            setIsError(true)
+            setMessage(
+              `${person.name} was already deleted from phonebook`
+            )
+            setTimeout(() => {
+              setMessage(null)
+              setIsError(false)
+            }, 3000)
+            setPersons(persons.filter((p) => p.id !== changedPerson.id))
+          })
+        setMessage(
+          `${person.name} has had their number changed`
+        )
+        setTimeout(() => {
+          setMessage(null)
+        }, 3000)
       }
     }
     else {
       personService.create(personObject).then((returnedPerson) => {
         setPersons(persons.concat(returnedPerson))
-        setNewName('')
-        setNewNumber('')
       })
+      setMessage(
+          `${newName} has been added to phonebook`
+        )
+      setTimeout(() => {
+        setMessage(null)
+      }, 3000)
     }
+    setNewName('')
+    setNewNumber('')
   }
 
   const removePerson = (id) => {
@@ -55,7 +76,7 @@ const App = () => {
       console.log(`${person.name} deleted`)
       personService
         .remove(id)
-        .then((returnedPerson) => {
+        .then(() => {
           setPersons(persons.filter((p) => p.id !== id))
         })
     }
@@ -82,6 +103,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} isError={isError}/>
       <Filter value={searchValue} onChange={handleSearchChange} />
       <h3>Add New</h3>
       <PersonForm 
