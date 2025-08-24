@@ -7,7 +7,7 @@ if (process.argv.length < 3) {
 
 const password = process.argv[2]
 
-const url = 
+const url =
 `mongodb+srv://maxscottrutherford:${password}@cluster0.cx0x97l.mongodb.net/noteApp?
 retryWrites=true&w=majority&appName=Cluster0`
 
@@ -22,10 +22,6 @@ const noteSchema = new mongoose.Schema({
 
 const Note = mongoose.model('Note', noteSchema)
 
-const note = new Note({
-  content: 'This note is not important',
-  important: false,
-})
 
 Note.find({ important: true }).then(result => {
   result.forEach(note => {
