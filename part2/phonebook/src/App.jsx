@@ -38,13 +38,7 @@ const App = () => {
           })
           .catch((error) => {
             setIsError(true)
-            setMessage(
-              `${person.name} was already deleted from phonebook`
-            )
-            setTimeout(() => {
-              setMessage(null)
-              setIsError(false)
-            }, 3000)
+            setMessage(error.response.data.error)
             setPersons(persons.filter((p) => p.id !== changedPerson.id))
           })
         setMessage(
@@ -56,18 +50,25 @@ const App = () => {
       }
     }
     else {
-      personService.create(personObject).then((returnedPerson) => {
-        setPersons(persons.concat(returnedPerson))
-      })
+      personService
+        .create(personObject)
+        .then((returnedPerson) => {
+          setPersons(persons.concat(returnedPerson))
+        })
+        .catch(error => {
+          setIsError(true)
+          setMessage(error.response.data.error)
+        })
       setMessage(
           `${newName} has been added to phonebook`
         )
-      setTimeout(() => {
-        setMessage(null)
-      }, 3000)
     }
     setNewName('')
     setNewNumber('')
+    setTimeout(() => {
+      setMessage(null)
+      setIsError(false)
+    }, 3000)
   }
 
   const removePerson = (id) => {
